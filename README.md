@@ -7,7 +7,7 @@ Eggyel felhasználóközpontúbb leírás: [Ördögkatlan Sorszámgép](http://w
 ## Időzítés, az algoritmus futása
 
  * Egy adott célnapra először midnig előző este fut először az algoritmus
- * Ezután 5 percenként ellenőrzi, hogy van-e sorszám, ami a célnapra kiadható (pl. mert visszaadták), ha van, újra lefut
+ * Ezután 5 percenként ellenőrzi, hogy van-e sorszám, ami a célnapra kiadható (pl. mert visszaadták), ha van, újra lefut ![Ördögkalan](http://messzevan.hu/oklogo.jpg)
 
 ## Leírás nagyléptékben
 
