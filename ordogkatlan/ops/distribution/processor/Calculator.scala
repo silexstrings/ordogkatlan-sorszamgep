@@ -40,7 +40,7 @@ class Calculator @Inject() (
       //ha van mit, csak akkor lépünk tovább
       if plays.values.exists(p => p.start.toLocalDate == targetDay && p.distributableSeats > 0)
 
-      //elemntjük a számított sorszámértékességeket (ha már volt számolva, ez csak önmagával felülírás)
+      //elmentjük a számított sorszámértékességeket (ha már volt számolva, ez csak önmagával felülírás)
       _ <- Future.sequence(plays.values.map(ds.saveTicketPrice))
     } yield {
       //és elindítjuk a kiosztást
