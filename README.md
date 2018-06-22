@@ -1,5 +1,7 @@
 # A XI. Ördögkatlan fesztivál sorszámgépének kiosztási algoritmusa
 
+![Ördögkalan](http://messzevan.hu/oklogo.jpg)
+
 [belépési pont](https://github.com/silexstrings/ordogkatlan-sorszamgep/blob/master/ordogkatlan/ops/distribution/processor/Calculator.scala#L31)
 
 Eggyel felhasználóközpontúbb leírás: [Ördögkatlan Sorszámgép](http://www.ordogkatlan.hu/2017/07/itt-az-ordogkatlan-sorszamgep.html)
@@ -7,7 +9,7 @@ Eggyel felhasználóközpontúbb leírás: [Ördögkatlan Sorszámgép](http://w
 ## Időzítés, az algoritmus futása
 
  * Egy adott célnapra először midnig előző este fut először az algoritmus
- * Ezután 5 percenként ellenőrzi, hogy van-e sorszám, ami a célnapra kiadható (pl. mert visszaadták), ha van, újra lefut ![Ördögkalan](http://messzevan.hu/oklogo.jpg)
+ * Ezután 5 percenként ellenőrzi, hogy van-e sorszám, ami a célnapra kiadható (pl. mert visszaadták), ha van, újra lefut
 
 ## Leírás nagyléptékben
 
