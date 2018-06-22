@@ -1,8 +1,8 @@
 # A XI. Ördögkatlan fesztivál sorszámgépének kiosztási algoritmusa
 
-én itt kezdeném az olvasást: 
-
 [belépési pont](https://github.com/silexstrings/ordogkatlan-sorszamgep/blob/master/ordogkatlan/ops/distribution/processor/Calculator.scala#L31)
+
+Eggyel felhasználóközpontúbb leírás: [Ördögkatlan Sorszámgép](http://www.ordogkatlan.hu/2017/07/itt-az-ordogkatlan-sorszamgep.html)
 
 ## Időzítés, az algoritmus futása
 
