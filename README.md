@@ -8,7 +8,7 @@ Eggyel felhasználóközpontúbb leírás: [Ördögkatlan Sorszámgép](http://w
 
 ## Időzítés, az algoritmus futása
 
- * Egy adott célnapra először midnig előző este fut először az algoritmus
+ * Egy adott célnapra először mindig előző este fut először az algoritmus
  * Ezután 5 percenként ellenőrzi, hogy van-e sorszám, ami a célnapra kiadható (pl. mert visszaadták), ha van, újra lefut
 
 ## Leírás nagyléptékben
@@ -24,7 +24,7 @@ A lenti leírás nagy része a forráskódban fellelhető kommentekben is ott va
  6. Aktuális prioritásnak beállítjuk a még nem érintett, legmagasabbat
  7. Végigmegyünk csoportonként, azon belül a fenti véletlenszerű sorrend szerint a látogatókon ([iteráció](https://github.com/silexstrings/ordogkatlan-sorszamgep/blob/master/ordogkatlan/ops/distribution/processor/Calculator.scala#L122))
  8. teljesítjük az aktuális prioritáson lévő kívánságát, ha az a célnapra szól, és van még szabad sorszám. Ha tehetjük, az összes igényelt sorszámot odaadjuk, ha nem, akkor csak annyit, amennyit tudunk. ([teljesítés](https://github.com/silexstrings/ordogkatlan-sorszamgep/blob/master/ordogkatlan/ops/distribution/processor/plugins/WishFulfiller.scala#L16))
- 9. Ha még van nem érintett prioritás és még van kiosztható sorszám, visszalépünk a **3**-mas pontra.
+ 9. Ha még van nem érintett prioritás és még van kiosztható sorszám, visszalépünk a **3**-as pontra.
 
 
 ## Magyarázatok, pontosítások
