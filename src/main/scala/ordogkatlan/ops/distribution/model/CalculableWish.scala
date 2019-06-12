@@ -1,7 +1,8 @@
 package ordogkatlan.ops.distribution.model
 
+import java.time.LocalDate
+
 import io.jvm.uuid._
-import org.joda.time.LocalDate
 
 /**
   * egy látogató egy kívánsága, aminek van esélye, hogy az aktuális, vagy egy jövőbeli
@@ -16,6 +17,5 @@ case class CalculableWish(
 
   //látogatók előzetes szűrésére szolgáló technikai mezők
   //a szükséges subselectek vállalhatatlanul lassítanák a query futását
-  disqualifierAt: Option[LocalDate],
   playDay: LocalDate
 )

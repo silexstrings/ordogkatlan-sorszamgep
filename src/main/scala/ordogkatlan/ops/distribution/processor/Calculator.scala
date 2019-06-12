@@ -1,11 +1,11 @@
 package ordogkatlan.ops.distribution.processor
 
-import com.google.inject.{Inject, Singleton}
+import java.time.{LocalDate, LocalDateTime, LocalTime}
+
 import io.jvm.uuid._
 import ordogkatlan.ops.distribution.ds.CalculatorDataSource
 import ordogkatlan.ops.distribution.model.{Applicant, DistributionState, TicketablePlay}
 import ordogkatlan.ops.distribution.processor.plugins.{FilterFulfillable, GroupApplicants, OrderApplicants, WishFulfiller}
-import org.joda.time.{DateTime, LocalDate, LocalTime}
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
@@ -19,19 +19,12 @@ import scala.concurrent.{ExecutionContext, Future}
   *   csak, ha van mit: létezik osztható sorszám és
   *   csak, ha van kinek: létezik nem teljesített kívánság osztható sorszámhoz
   **/
-@Singleton
-class Calculator @Inject() (
-                             ds: CalculatorDataSource,
-                             filterFulfillable: FilterFulfillable,
-                             groupApplicants: GroupApplicants,
-                             orderApplicants: OrderApplicants,
-                             fulfillOne: WishFulfiller
-)(implicit ec: ExecutionContext) {
+class Calculator(ds: CalculatorDataSource)(implicit ec: ExecutionContext) {
 
   /**
     * belépési pont
     */
-  def calculate(targetDay: LocalDate, now: DateTime):Future[DistributionState] = {
+  def calculate(targetDay: LocalDate, now: LocalDateTime): Future[DistributionState] = {
     (for {
       applicants <- ds.applicants(targetDay)          // az összes látogató, aki kaphat még a célnapra valamit
       if applicants.nonEmpty                          // ha van kinek, csak akkor lépünk tovább
@@ -39,9 +32,6 @@ class Calculator @Inject() (
 
       //ha van mit, csak akkor lépünk tovább
       if plays.values.exists(p => p.start.toLocalDate == targetDay && p.distributableSeats > 0)
-
-      //elmentjük a számított sorszámértékességeket (ha már volt számolva, ez csak önmagával felülírás)
-      _ <- Future.sequence(plays.values.map(ds.saveTicketPrice))
     } yield {
       //és elindítjuk a kiosztást
       calculateDistribution(targetDay, applicants, plays, now)
@@ -63,10 +53,10 @@ class Calculator @Inject() (
     priority: Int,
     targetDay: LocalDate,
     plays: Map[UUID, TicketablePlay],
-    now: DateTime
-  ):List[List[Applicant]] = groupApplicants(
-    filterFulfillable.filterHasFulfillable(applicants)(priority, targetDay, now, plays)
-  ).map(orderApplicants.apply)
+    now: LocalDateTime
+  ): List[List[Applicant]] = GroupApplicants(
+    FilterFulfillable.filterHasFulfillable(applicants)(priority, targetDay, now, plays)
+  ).map(OrderApplicants.apply)
 
   private def rebuildApplicantOrder(state: DistributionState):List[List[Applicant]] =
     rebuildApplicantOrder(state.served)(state.priority, state.targetDay, state.plays, state.now)
@@ -79,10 +69,10 @@ class Calculator @Inject() (
     * "minél inkább azt kapja mindenki, amit szeretne"
     * "minél teljesebb kiosztásra törekszünk, ha csak lehet, ne ragadjon benn sorszám"
     */
-  private def serveOneApplicant(applicant: Applicant)(state: DistributionState):DistributionState = {
+  private def serveOneApplicant(applicant: Applicant)(state: DistributionState): DistributionState = {
 
-    val wishes = filterFulfillable(applicant)(state)
-    val fulfilledOpt = fulfillOne(wishes, applicant)(state)
+    val wishes = FilterFulfillable(applicant)(state)
+    val fulfilledOpt = WishFulfiller(wishes, applicant)(state) //teljesítünk egy kívánságot
 
     state.updated(applicant, fulfilledOpt)
   }
@@ -92,7 +82,7 @@ class Calculator @Inject() (
     * ha az teljesíthető, vagy teljesítendő az adott célnapon.
     */
   @tailrec
-  private def iterateSpenderGroupMembers(applicants: List[Applicant])(state: DistributionState):DistributionState = {
+  private def iterateSpenderGroupMembers(applicants: List[Applicant])(state: DistributionState): DistributionState = {
     applicants.headOption match {
       case Some(applicant) =>
         iterateSpenderGroupMembers(applicants.tail)(serveOneApplicant(applicant)(state))
@@ -106,7 +96,7 @@ class Calculator @Inject() (
     * legtöbbet költöttekig
     */
   @tailrec
-  private def iterateSpenderGroups(groups: List[List[Applicant]])(state: DistributionState):DistributionState = {
+  private def iterateSpenderGroups(groups: List[List[Applicant]])(state: DistributionState): DistributionState = {
     groups.headOption match {
       case Some(group) =>
         val newState = iterateSpenderGroupMembers(group)(state)
@@ -120,7 +110,7 @@ class Calculator @Inject() (
     * fontosak felé
     */
   @tailrec
-  private def iteratePrirorities(state: DistributionState):DistributionState = {
+  private def iteratePrirorities(state: DistributionState): DistributionState = {
     if (state.priority < 11) {
       val newState = iterateSpenderGroups(state.applicants)(state).copy(priority = state.priority + 1)
       iteratePrirorities(newState.copy(applicants = rebuildApplicantOrder(newState), served = Set()))
@@ -142,7 +132,11 @@ class Calculator @Inject() (
     * kimenetek:
     *   * a kiosztás utolsó iterációjának végállapota
     */
-  def calculateDistribution(targetDay: LocalDate, applicants: Set[Applicant], plays: Map[UUID, TicketablePlay], now: DateTime):DistributionState = {
+  private def calculateDistribution(
+    targetDay: LocalDate,
+    applicants: Set[Applicant],
+    plays: Map[UUID, TicketablePlay],
+    now: LocalDateTime): DistributionState = {
 
     //induló állapot
     val state = DistributionState(
@@ -163,22 +157,22 @@ class Calculator @Inject() (
 object Calculator {
 
   trait MagicNumbers {
-    val BLOCKER_HALF_INTERVAL_MINS:Int = 30 //az előadásra való odaéérés becsült értékének a fele (perc)
-    val RETRIEVAL_BUFFER_MINS:Int = 90      //legfeljebb ennyi idővel az előadás kezdete előtt vehető át sorszám (perc)
-    val DISTRIBUTION_BUFFER_MINS:Int = 60   //az átvételi határidő előtt legfeljebb ennyivel osztható ki sorszám
+    val BLOCKER_HALF_INTERVAL_MINS: Int = 30 //az előadásra való odaéérés becsült értékének a fele (perc)
+    val RETRIEVAL_BUFFER_MINS: Int = 90      //legfeljebb ennyi idővel az előadás kezdete előtt vehető át sorszám (perc)
+    val DISTRIBUTION_BUFFER_MINS: Int = 60   //az átvételi határidő előtt legfeljebb ennyivel osztható ki sorszám
 
-    val RETRIEVAL_END_TIME:LocalTime = LocalTime.parse("18:00:00") //az infopultok zárási időpontja
+    val RETRIEVAL_END_TIME: LocalTime = LocalTime.parse("18:00:00") //az infopultok zárási időpontja
   }
 
-  val magicNumbers:MagicNumbers = new MagicNumbers {}
+  val magicNumbers: MagicNumbers = new MagicNumbers {}
 
   /**
     * egy sorszám értéke a rendelkezésre álló helyek és a bejelentett kívánságok alapján
     *
     * "egy sorszám annyit ér, ahány nem kapták meg, hogy te megkaphasd"
     */
-  def creditsPerTicket(seats: Int, wishes: Int):Float = {
-    Math.round(Math.max(0, (wishes.toFloat / seats.toFloat) - 1) * 100F) / 100F
+  def creditsPerTicket(seats: Int, wishes: Int): Double = {
+    Math.round(Math.max(0D, (wishes.toDouble / seats.toDouble) - 1D) * 100D) / 100D
   }
 
 }

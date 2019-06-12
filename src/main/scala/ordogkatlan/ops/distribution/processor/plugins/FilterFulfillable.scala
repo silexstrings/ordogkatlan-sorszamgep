@@ -1,15 +1,14 @@
 package ordogkatlan.ops.distribution.processor.plugins
 
-import com.google.inject.Singleton
+import java.time.{LocalDate, LocalDateTime}
 import io.jvm.uuid._
 import ordogkatlan.ops.distribution.model.{Applicant, CalculableWish, DistributionState, TicketablePlay}
-import org.joda.time.{DateTime, LocalDate}
+import ordogkatlan.ops.distribution.model.Overlaps._
 
 /**
   * A teljesíthető kívánságok és a hozzájuk tartozó látogatók kiválogatása
   */
-@Singleton
-class FilterFulfillable {
+object FilterFulfillable {
 
   /**
     * kiválasztja a potenciális látogatók közül azokat, akiknek van kívánsága, ami ebben a körben teljesíthető, tehát:
@@ -19,9 +18,9 @@ class FilterFulfillable {
   def filterHasFulfillable(applicants: Set[Applicant])(
     priority: Int,
     targetDay: LocalDate,
-    now: DateTime,
+    now: LocalDateTime,
     plays: Map[UUID, TicketablePlay]
-  ):Set[Applicant] = {
+  ): Set[Applicant] = {
 
     applicants.filter { applicant =>
       { //nincs még két különböző előadásra sorszáma a látogatónak, azaz
@@ -42,7 +41,11 @@ class FilterFulfillable {
     *   * a látogatónak nincs már megkapott, átfedő sorszáma
     *   * a látgoatnók nincs még megkapott sorszáma rá
     */
-  def applyImpl(applicant: Applicant)(targetDay: LocalDate, now: DateTime, plays: Map[UUID, TicketablePlay]): List[CalculableWish] =
+  def applyImpl(applicant: Applicant)(
+    targetDay: LocalDate,
+    now: LocalDateTime,
+    plays: Map[UUID, TicketablePlay]): List[CalculableWish] =
+
     applicant.wishlist.filter { wish =>                             //csak azok a kívánságok, amikre
       wish.wonSeats == 0 &&                                         //nem kapott még sorszámot a látogató
       plays.get(wish.ticketablePlayId).exists { play =>             //és olyan előadásra vonatkoznak, ami

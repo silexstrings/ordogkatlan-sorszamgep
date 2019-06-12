@@ -9,13 +9,13 @@ case class Applicant(
 
   visitorId: UUID,                  //a látogató azonosítója
   wishlist: List[CalculableWish],   //a látogató kívánságlistájának aktuális kiosztás szempontjából releváns része
-  spentCredits: Float               //a látogató által eddig megkapott sorszámok összértéke
+  spentCredits: Double              //a látogató által eddig megkapott sorszámok összértéke
 ) {
 
   /**
-    * egy frissen megakpott kívánság feljegyzése
+    * egy frissen megkapott kívánság feljegyzése
     */
-  def updated(fulfilled: CalculableWish)(plays: Map[UUID, TicketablePlay]):Applicant = {
+  def updated(fulfilled: CalculableWish)(plays: Map[UUID, TicketablePlay]): Applicant = {
     copy(
       //kicseréljük a kívánságot a megkapott változatra
       wishlist = wishlist.updated(wishlist.indexWhere(_.wishId == fulfilled.wishId), fulfilled),

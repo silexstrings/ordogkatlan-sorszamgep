@@ -2,7 +2,7 @@ package ordogkatlan.ops.distribution.processor.plugins
 
 import ordogkatlan.ops.distribution.model.{Applicant, CalculableWish, DistributionState}
 
-trait WishFulfiller {
+object WishFulfiller {
 
   /**
     * a látogató számára kiadható sorszámok közül kiválasztja a legmegfelelőbbet és beállítja az odaadható sorszámokat,
@@ -13,25 +13,19 @@ trait WishFulfiller {
     *
     * "inkább adunk 150 látogatónak két-két sorszámot, mint 300-nak egyet-egyet (ha mindenki kettőt kért)"
     */
-  def apply(wishes: List[CalculableWish], applicant: Applicant)(state: DistributionState):Option[CalculableWish] =
+  def apply(wishes: List[CalculableWish], applicant: Applicant)(state: DistributionState): Option[CalculableWish] =
     findBest(wishes, applicant)(state).map { wish =>
       wish.copy(
         wonSeats = Math.min(wish.desiredSeats, state.plays(wish.ticketablePlayId).distributableSeats)
       )
     }
 
-  def findBest(wishes: List[CalculableWish], applicant: Applicant)(state: DistributionState):Option[CalculableWish]
-
-}
-
-
-class PriorityWishFulfiller extends WishFulfiller {
-
   /**
     * legmegfelelőbb: az éppen kezelt prioritáson van
     *
     * "mindenkinek próbáljuk azt adni, amit a legjobban szeretne"
     */
-  override def findBest(wishes: List[CalculableWish], applicant: Applicant)(state: DistributionState) =
+  def findBest(wishes: List[CalculableWish], applicant: Applicant)(state: DistributionState): Option[CalculableWish] =
     wishes.find(_.priority == state.priority)
+
 }

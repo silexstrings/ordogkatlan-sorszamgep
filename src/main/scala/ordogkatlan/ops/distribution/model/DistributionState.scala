@@ -1,7 +1,8 @@
 package ordogkatlan.ops.distribution.model
 
+import java.time.{LocalDate, LocalDateTime}
+
 import io.jvm.uuid._
-import org.joda.time.{DateTime, LocalDate}
 
 
 /**
@@ -15,7 +16,7 @@ case class DistributionState(
   served: Set[Applicant] = Set(),               //az aktuális iterációban már érintett látogatók
   fulfilledWishes: Set[FulfilledWish] = Set(),  //a kiosztás során már teljesített kívánságok
   targetDay: LocalDate,                         //az aktuális kiosztás célnapja
-  now: DateTime,                                //az aktiális kosztás "most"-ja, az időpontfüggőségek ez alapján dőlnek el
+  now: LocalDateTime,                           //az aktiális kosztás "most"-ja, az időpontfüggőségek ez alapján dőlnek el
 
   //az aktuális kiosztás kezdetén talált olyan látogatók, akiknek a kiosztás során adható sorszám
   initial: Set[Applicant]
@@ -27,7 +28,7 @@ case class DistributionState(
   /**
     * egy látogató egy kiosztási iteráció során való érintésének feljegyzése
     */
-  def updated(applicant: Applicant, fulfilledOpt: Option[CalculableWish]):DistributionState = fulfilledOpt match {
+  def updated(applicant: Applicant, fulfilledOpt: Option[CalculableWish]): DistributionState = fulfilledOpt match {
     // ha volt teljesített kívánság
     case Some(justFulfilled) =>
       //a látogató adatait módosítjuk a teljesült kívánsággal
@@ -55,7 +56,7 @@ case class DistributionState(
 object DistributionState {
 
   //célnapi nullelem
-  def empty(targetDay: LocalDate, now: DateTime):DistributionState = DistributionState(
+  def empty(targetDay: LocalDate, now: LocalDateTime): DistributionState = DistributionState(
     applicants = List(),
     plays = Map(),
     priority = 0,
