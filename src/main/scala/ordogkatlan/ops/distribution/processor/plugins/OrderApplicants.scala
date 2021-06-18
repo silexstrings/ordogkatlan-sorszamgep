@@ -21,8 +21,8 @@ object OrderApplicants {
     *  a sorban álló látogatók"
     */
   def apply(applicants: Set[Applicant]): List[Applicant] = {
-    randomizer.setSeed(randomizer.nextLong)
-    applicants.toList.zip((1 to applicants.size).map(_ => randomizer.nextInt))
+    randomizer.setSeed(randomizer.nextLong())
+    applicants.toList.zip((1 to applicants.size).map(_ => randomizer.nextInt()))
       .sortBy(_._2)
       .map(_._1)
   }
