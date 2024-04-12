@@ -1,8 +1,8 @@
 package ordogkatlan.ops.distribution.model
 
-import java.time.{LocalDate, LocalDateTime}
-
 import io.jvm.uuid._
+
+import java.time.LocalDateTime
 
 
 /**
@@ -15,15 +15,11 @@ case class DistributionState(
   priority: Int,                                //az aktuális iterációban kezelt prioritási hely
   served: Set[Applicant] = Set(),               //az aktuális iterációban már érintett látogatók
   fulfilledWishes: Set[FulfilledWish] = Set(),  //a kiosztás során már teljesített kívánságok
-  targetDay: LocalDate,                         //az aktuális kiosztás célnapja
   now: LocalDateTime,                           //az aktiális kosztás "most"-ja, az időpontfüggőségek ez alapján dőlnek el
 
   //az aktuális kiosztás kezdetén talált olyan látogatók, akiknek a kiosztás során adható sorszám
   initial: Set[Applicant]
 ) {
-
-  //az adott kiosztás során esélyes, de végül semmit nem kapott látogatók azonosítója - értesítéshez szükséges
-  lazy val nonWinningEntries: Set[UUID] = initial.map(_.visitorId) -- fulfilledWishes.map(_.visitorId)
 
   /**
     * egy látogató egy kiosztási iteráció során való érintésének feljegyzése
@@ -55,12 +51,11 @@ case class DistributionState(
 
 object DistributionState {
 
-  //célnapi nullelem
-  def empty(targetDay: LocalDate, now: LocalDateTime): DistributionState = DistributionState(
+  //nullelem
+  def empty(now: LocalDateTime): DistributionState = DistributionState(
     applicants = List(),
     plays = Map(),
     priority = 0,
-    targetDay = targetDay,
     initial = Set(),
     now = now
   )

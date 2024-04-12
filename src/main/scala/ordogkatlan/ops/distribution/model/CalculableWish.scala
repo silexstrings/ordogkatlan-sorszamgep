@@ -1,7 +1,5 @@
 package ordogkatlan.ops.distribution.model
 
-import java.time.LocalDate
-
 import io.jvm.uuid._
 
 /**
@@ -13,9 +11,5 @@ case class CalculableWish(
   desiredSeats: Int,        //a megszerezni kívánt sorszámok mennyisége
   wonSeats: Int,            //a már sikeresen megszerzett sorszámok mennyisége
   ticketablePlayId: UUID,   //az előadás azonosítója
-  priority: Int,            //a kívánság fontossága a látogató számára. Az alacsonyabb értékű kívánság preferáltabb
-
-  //látogatók előzetes szűrésére szolgáló technikai mezők
-  //a szükséges subselectek vállalhatatlanul lassítanák a query futását
-  playDay: LocalDate
+  priority: Int             //a kívánság fontossága a látogató számára. Az alacsonyabb értékű kívánság preferáltabb
 )

@@ -8,39 +8,34 @@ Eggyel felhasználóközpontúbb leírás: [Ördögkatlan Sorszámgép](http://w
 
 ## Időzítés, az algoritmus futása
 
- * Egy adott célnapra először mindig előző este fut először az algoritmus
- * Ezután 5 percenként ellenőrzi, hogy van-e sorszám, ami a célnapra kiadható (pl. mert visszaadták), ha van, újra lefut
+ * Az algoritmus 5 percenként fut
 
 ## Leírás nagyléptékben
 
 A lenti leírás nagy része a forráskódban fellelhető kommentekben is ott van, ez az áttekintés a tájékozódást hivatott segíteni:
 
 
- 1. Összegyűjtjük a felhasználókat és a kívánságlistájukat, akiknek van a célnapon teljesíthető kívánsága ([adatforrás](https://github.com/silexstrings/ordogkatlan-sorszamgep/blob/3232b5449f5ecc7ae289e69618ba0cf381e95a60/src/main/scala/ordogkatlan/ops/distribution/ds/CalculatorDataSource.scala#L23))
+ 1. Összegyűjtjük a felhasználókat és a kívánságlistájukat, akiknek van éppen teljesíthető kívánsága ([adatforrás](https://github.com/silexstrings/ordogkatlan-sorszamgep/blob/3232b5449f5ecc7ae289e69618ba0cf381e95a60/src/main/scala/ordogkatlan/ops/distribution/ds/CalculatorDataSource.scala#L23))
  2. Elsődleges kiosztás esetén kiszámoljuk az érintett előadások sorszámainak értékességét, másodlagos kiosztásoknál a már kiszámolt értéket fogjuk használni ([kalkuláció](https://github.com/silexstrings/ordogkatlan-sorszamgep/blob/3232b5449f5ecc7ae289e69618ba0cf381e95a60/src/main/scala/ordogkatlan/ops/distribution/processor/Calculator.scala#L174))
  3. A pályázó látogatók közül kiszűrjük, akiknek nem maradt teljesíthető kívánságuk ([szűrés](https://github.com/silexstrings/ordogkatlan-sorszamgep/blob/3232b5449f5ecc7ae289e69618ba0cf381e95a60/src/main/scala/ordogkatlan/ops/distribution/processor/plugins/FilterFulfillable.scala#L18))
  4. A pályázó látogatókat csoportokba osztjuk az alapján, hogy eddig mekkora értékben kaptak sorszámot, a csoportokat növekvő sorrendbe állítjuk ([csoportosítás](https://github.com/silexstrings/ordogkatlan-sorszamgep/blob/3232b5449f5ecc7ae289e69618ba0cf381e95a60/src/main/scala/ordogkatlan/ops/distribution/processor/plugins/GroupApplicants.scala#L17))
  5. Az egyes csoportok tagjait véletlenszerűen sorbaállítjuk ([egyenrangúak sorbaállítása](https://github.com/silexstrings/ordogkatlan-sorszamgep/blob/3232b5449f5ecc7ae289e69618ba0cf381e95a60/src/main/scala/ordogkatlan/ops/distribution/processor/plugins/OrderApplicants.scala#L23))
  6. Aktuális prioritásnak beállítjuk a még nem érintett, legmagasabbat
  7. Végigmegyünk csoportonként, azon belül a fenti véletlenszerű sorrend szerint a látogatókon ([iteráció](https://github.com/silexstrings/ordogkatlan-sorszamgep/blob/3232b5449f5ecc7ae289e69618ba0cf381e95a60/src/main/scala/ordogkatlan/ops/distribution/processor/Calculator.scala#L113))
- 8. teljesítjük az aktuális prioritáson lévő kívánságát, ha az a célnapra szól, és van még szabad sorszám. Ha tehetjük, az összes igényelt sorszámot odaadjuk, ha nem, akkor csak annyit, amennyit tudunk. ([teljesítés](https://github.com/silexstrings/ordogkatlan-sorszamgep/blob/3232b5449f5ecc7ae289e69618ba0cf381e95a60/src/main/scala/ordogkatlan/ops/distribution/processor/plugins/WishFulfiller.scala#L16))
+ 8. teljesítjük az aktuális prioritáson lévő kívánságát, ha az épp kiszolgálható, és van még szabad sorszám. Ha tehetjük, az összes igényelt sorszámot odaadjuk, ha nem, akkor csak annyit, amennyit tudunk. ([teljesítés](https://github.com/silexstrings/ordogkatlan-sorszamgep/blob/3232b5449f5ecc7ae289e69618ba0cf381e95a60/src/main/scala/ordogkatlan/ops/distribution/processor/plugins/WishFulfiller.scala#L16))
  9. Ha még van nem érintett prioritás és még van kiosztható sorszám, visszalépünk a **3**-as pontra.
-
 
 ## Magyarázatok, pontosítások
 
-### célnap
-a futás során az ezen a napon játszott előadások vehetők csak figyelembe
-
-### felhasználó, akinek van a célnapon teljesíthető kívánsága
+### felhasználó, akinek van teljesíthető kívánsága
 
 * nem diszkvalifikált, azaz:
   * legfeljebb egy napon volt át nem vett, megkapott, de vissza nem adott kívánsága, amit elsődleges kiosztáson kapott
-* van legalább egy kívánsága a célnapra, ami kiszolgálható, azaz:
+* van legalább egy kívánsága, ami kiszolgálható, azaz:
   * nem elmaradó előadásra szól
   * még van ideje átvenni a sorszámot, ha megkapja
   * nincs átfedésben más, már megkapott sorszámmal
-  * nincs két különböző, a célnapon játszott előadásra sorszáma
+  * nincs két különböző, az adott napon játszott előadásra sorszáma
 
 ### sorszám átvételi időkorlát
 Az előadás kezdete előtt másfél órával, de legkésőbb este 6-kor át kell venni a sorszámokat

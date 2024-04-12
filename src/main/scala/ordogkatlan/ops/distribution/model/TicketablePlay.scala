@@ -1,18 +1,18 @@
 package ordogkatlan.ops.distribution.model
 
-import java.time.LocalDateTime
-
+import java.time.{LocalDate, LocalDateTime}
 import io.jvm.uuid._
 import ordogkatlan.ops.distribution.processor.Calculator
 
 /**
-  * előadás, aminek van esélye, hogy az aktuális kiosztás során egy látogató sorszámot kapjon rá,
-  * azaz a célnapon van
+  * előadás, aminek van esélye, hogy az aktuális kiosztás során egy látogató sorszámot kapjon rá
   */
 case class TicketablePlay(
   playId: UUID,                     //az előadás azonosítója
   distributableSeats: Int,          //az előadás még kiosztható sorszámainak száma
   location: String,                 //az előadás helyszíne
+  distributableSince: LocalDateTime,//az előadásra szóló sorszámok kioszthatósági időhatára
+  distributableUntil: LocalDateTime,//az előadásra szóló sorszámok kioszthatósági időhatára
   start: LocalDateTime,             //az előadás kezdete
   end: LocalDateTime,               //az előadás vége
   isCanceled: Boolean,              //elmarad-e az előadás
@@ -37,25 +37,9 @@ case class TicketablePlay(
   )
 
   /**
-    * az előadásra megkapott sorszám átvételének időhatára
-    *
-    * a kioszthatósági időhatár kiszámításához szükséges
-    */
-  lazy val retrievableUntil: LocalDateTime = {
-    val retrievalEndTime = start.toLocalDate.atTime(RETRIEVAL_END_TIME)
-    if ((start minusMinutes RETRIEVAL_BUFFER_MINS) isAfter retrievalEndTime) {
-      retrievalEndTime
-    }
-    else {
-      start minusMinutes RETRIEVAL_BUFFER_MINS
-    }
-  }
-
-  /**
-    * az előadásra szóló sorszámok kioszthatósági időhatára
-    */
-  lazy val distributableUntil: LocalDateTime = retrievableUntil minusMinutes DISTRIBUTION_BUFFER_MINS
-
+   * az előadás napja
+   */
+  lazy val day: LocalDate = start.toLocalDate
 
   /**
     * az éppen most kiosztott kívánság feljegyzése
