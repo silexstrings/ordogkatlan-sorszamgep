@@ -11,9 +11,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * időzítés:
-  *  * minden fesztiválnap előtti nap este kilenckor elsődlege kiosztás a következő napra
-  *  * egy elsődleges kiosztás és a következő nap végső megnyerhetőségi határideje (jelenleg: 15:30) között
-  *    másodlagos kiosztási kísérlet 5 percenként
+  *  * kiosztási kísérlet 5 percenként
   *
   *   csak, ha van mit: létezik osztható sorszám és
   *   csak, ha van kinek: létezik nem teljesített kívánság osztható sorszámhoz
@@ -36,7 +34,7 @@ class Calculator(ds: CalculatorDataSource)(implicit ec: ExecutionContext) {
       calculateDistribution(applicants, plays, now)
     })
       .recover {
-        //a napi nullelemmel térünk vissza, ha valamelyik belépési feltétel nem teljesült
+        //a nullelemmel térünk vissza, ha valamelyik belépési feltétel nem teljesült
         case _:NoSuchElementException => DistributionState.empty(now)
       }
   }
@@ -71,7 +69,12 @@ class Calculator(ds: CalculatorDataSource)(implicit ec: ExecutionContext) {
     val wishes = FilterFulfillable(applicant)(state)
     val fulfilledOpt = WishFulfiller(wishes, applicant)(state) //teljesítünk egy kívánságot
 
-    state.updated(applicant, fulfilledOpt)
+    val trail = fulfilledOpt.map { fulfilled =>
+      val title = state.plays(fulfilled.ticketablePlayId).title
+      s"desired: ${fulfilled.desiredSeats} won: ${fulfilled.wonSeats} for: ${fulfilled.ticketablePlayId} ($title)"
+    }.getOrElse("no eligible")
+
+    state.updated(applicant, fulfilledOpt).copy(trail = state.trail.appended(s"fulfilling: $trail"))
   }
 
   /**
@@ -80,11 +83,12 @@ class Calculator(ds: CalculatorDataSource)(implicit ec: ExecutionContext) {
     */
   @tailrec
   private def iterateSpenderGroupMembers(applicants: List[Applicant])(state: DistributionState): DistributionState = {
+    val trailed = state.copy(trail = state.trail.appended(s"iterating on applicant ${applicants.headOption.map(_.visitorId)}"))
     applicants.headOption match {
       case Some(applicant) =>
-        iterateSpenderGroupMembers(applicants.tail)(serveOneApplicant(applicant)(state))
+        iterateSpenderGroupMembers(applicants.tail)(serveOneApplicant(applicant)(trailed))
       case None =>
-        state
+        trailed
     }
   }
 
@@ -94,11 +98,12 @@ class Calculator(ds: CalculatorDataSource)(implicit ec: ExecutionContext) {
     */
   @tailrec
   private def iterateSpenderGroups(groups: List[List[Applicant]])(state: DistributionState): DistributionState = {
+    val trailed = state.copy(trail = state.trail.appended(s"iterating on spender group: ${groups.headOption.flatMap(_.headOption.map(_.spentCredits))}"))
     groups.headOption match {
       case Some(group) =>
-        val newState = iterateSpenderGroupMembers(group)(state)
+        val newState = iterateSpenderGroupMembers(group)(trailed)
         iterateSpenderGroups(groups.tail)(newState)
-      case None => state
+      case None => trailed
     }
   }
 
@@ -108,12 +113,13 @@ class Calculator(ds: CalculatorDataSource)(implicit ec: ExecutionContext) {
     */
   @tailrec
   private def iteratePrirorities(state: DistributionState): DistributionState = {
-    if (state.priority < 11) {
-      val newState = iterateSpenderGroups(state.applicants)(state).copy(priority = state.priority + 1)
+    val trailed = state.copy(trail = state.trail.appended(s"iterating on priority ${state.priority}"))
+    if (trailed.priority < 11) {
+      val newState = iterateSpenderGroups(trailed.applicants)(trailed).copy(priority = trailed.priority + 1)
       iteratePrirorities(newState.copy(applicants = rebuildApplicantOrder(newState), served = Set()))
     }
     else {
-      state
+      trailed
     }
   }
 
@@ -139,7 +145,8 @@ class Calculator(ds: CalculatorDataSource)(implicit ec: ExecutionContext) {
       plays = plays,
       priority = 0,
       initial = applicants,
-      now = now
+      now = now,
+      trail = Seq()
     )
 
     //végigmegyünk a prioritásokon

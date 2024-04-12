@@ -18,7 +18,8 @@ case class DistributionState(
   now: LocalDateTime,                           //az aktiális kosztás "most"-ja, az időpontfüggőségek ez alapján dőlnek el
 
   //az aktuális kiosztás kezdetén talált olyan látogatók, akiknek a kiosztás során adható sorszám
-  initial: Set[Applicant]
+  initial: Set[Applicant],
+  trail: Seq[String]
 ) {
 
   /**
@@ -57,7 +58,8 @@ object DistributionState {
     plays = Map(),
     priority = 0,
     initial = Set(),
-    now = now
+    now = now,
+    trail = Seq()
   )
 
 }
