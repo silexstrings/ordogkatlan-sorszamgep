@@ -21,7 +21,7 @@ class Calculator(ds: CalculatorDataSource)(implicit ec: ExecutionContext) {
   /**
     * belépési pont
     */
-  def calculate(now: LocalDateTime): Future[DistributionState] = {
+  def calculate(now: LocalDateTime): Future[Option[DistributionState]] = {
     (for {
       applicants <- ds.applicants()          // az összes látogató, aki kaphat még most valamit
       if applicants.nonEmpty                          // ha van kinek, csak akkor lépünk tovább
@@ -31,11 +31,11 @@ class Calculator(ds: CalculatorDataSource)(implicit ec: ExecutionContext) {
       if plays.values.exists(p => p.distributableSince.isBefore(now) && p.distributableUntil.isAfter(now) && p.distributableSeats > 0)
     } yield {
       //és elindítjuk a kiosztást
-      calculateDistribution(applicants, plays, now)
+      Some(calculateDistribution(applicants, plays, now))
     })
       .recover {
         //a nullelemmel térünk vissza, ha valamelyik belépési feltétel nem teljesült
-        case _:NoSuchElementException => DistributionState.empty(now)
+        case _:NoSuchElementException => None
       }
   }
 
