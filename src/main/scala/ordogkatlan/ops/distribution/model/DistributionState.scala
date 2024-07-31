@@ -13,7 +13,8 @@ case class DistributionState(
   plays: Map[UUID, TicketablePlay],   //az érintett előadások adatai
 
   priority: Int,                                //az aktuális iterációban kezelt prioritási hely
-  served: Set[Applicant] = Set(),               //az aktuális iterációban már érintett látogatók
+  servedInGroup: Set[Applicant] = Set(),               //az aktuális iterációban már érintett látogatók
+  winners: Set[Applicant] = Set(),               //már valamit kapott látogatók (utófeldolgozásra)
   fulfilledWishes: Set[FulfilledWish] = Set(),  //a kiosztás során már teljesített kívánságok
   now: LocalDateTime,                           //az aktiális kosztás "most"-ja, az időpontfüggőségek ez alapján dőlnek el
 
@@ -35,7 +36,8 @@ case class DistributionState(
         //az előadást a módosított állapotra cseréljük
         plays = plays.updated(justFulfilled.ticketablePlayId, plays(justFulfilled.ticketablePlayId).updated(justFulfilled)),
         //a látogatót az érintettek közé tesszük, módosított állapotban
-        served = served + applicantUpdated,
+        servedInGroup = servedInGroup + applicantUpdated,
+        winners = winners.filter(_.visitorId != applicantUpdated.visitorId) + applicantUpdated,
         //feljegyzzük a teljesült kívánságot
         fulfilledWishes =
           fulfilledWishes + FulfilledWish.from(justFulfilled, plays(justFulfilled.ticketablePlayId), applicant.visitorId)
@@ -45,7 +47,7 @@ case class DistributionState(
     case None =>
       copy(
         //a látogatót az érintettek közé tesszük
-        served = served + applicant
+        servedInGroup = servedInGroup + applicant,
       )
   }
 }

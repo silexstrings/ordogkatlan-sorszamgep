@@ -54,7 +54,7 @@ class Calculator(ds: CalculatorDataSource)(implicit ec: ExecutionContext) {
   ).map(OrderApplicants.apply)
 
   private def rebuildApplicantOrder(state: DistributionState):List[List[Applicant]] =
-    rebuildApplicantOrder(state.served)(state.plays, state.now)
+    rebuildApplicantOrder(state.servedInGroup)(state.plays, state.now)
 
 
   /**
@@ -68,7 +68,6 @@ class Calculator(ds: CalculatorDataSource)(implicit ec: ExecutionContext) {
 
     val wishes = FilterFulfillable(applicant)(state)
     val fulfilledOpt = WishFulfiller(wishes, applicant)(state) //teljesítünk egy kívánságot
-
     val trail = fulfilledOpt.map { fulfilled =>
       val title = state.plays(fulfilled.ticketablePlayId).title
       s"desired: ${fulfilled.desiredSeats} won: ${fulfilled.wonSeats} for: ${fulfilled.ticketablePlayId} ($title)"
@@ -116,7 +115,7 @@ class Calculator(ds: CalculatorDataSource)(implicit ec: ExecutionContext) {
     val trailed = state.copy(trail = state.trail.appended(s"iterating on priority ${state.priority}"))
     if (trailed.priority < 11) {
       val newState = iterateSpenderGroups(trailed.applicants)(trailed).copy(priority = trailed.priority + 1)
-      iteratePrirorities(newState.copy(applicants = rebuildApplicantOrder(newState), served = Set()))
+      iteratePrirorities(newState.copy(applicants = rebuildApplicantOrder(newState), servedInGroup = Set()))
     }
     else {
       trailed
